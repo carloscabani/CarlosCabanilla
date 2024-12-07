@@ -1,57 +1,78 @@
-from collections import defaultdict
+from tqdm import tqdm
 
-with open("input.txt") as file:
-    c_reglas, updates = file.read().strip().split("\n\n")
-    reglas = []
-    for line in c_reglas.split("\n"):
-        a, b = line.split("|")
-        reglas.append((int(a), int(b)))
-    updates = [list(map(int, line.split(","))) for line in updates.split("\n")]
+with open("input.txt") as fin:
+    cuadricula = [list(line) for line in fin.read().strip().split("\n")]
 
+n = len(cuadricula)
+m = len(cuadricula[0])
 
-def seguir_reglas(update):
-    dic = {}
-    for i, num in enumerate(update):
-        dic[num] = i
+pos_inicial_guardia = False
+
+for i in range(n):
+    for j in range(m):
+        if cuadricula[i][j] == "^":
+            pos_inicial_guardia = True
+            break
+
+    if pos_inicial_guardia:
+        break
+
+ii = i
+jj = j
+
+l_direcciones = [[-1, 0], [0, 1], [1, 0], [0, -1]]
+
+dir = 0
+c_visitas = set()
+while True:
     
-    for a, b in reglas:
-        if a in dic and b in dic and not dic[a] < dic[b]:
-            return False, 0
-        
-    return True, update[len(update) // 2]
+    c_visitas.add((i, j))
 
-def ordenar(update):
-    r = []
-    for a, b in reglas:
-        if not (a in update and b in update):
-            continue
-        r.append((a, b))
+    sig_i = i + l_direcciones[dir][0]
+    sig_j = j + l_direcciones[dir][1]
 
-    indeg = defaultdict(int)
-    for a, b in r:
-        indeg[b] += 1
+    if not (0 <= sig_i < n and 0 <= sig_j < n):
+        break
+
+    if cuadricula[sig_i][sig_j] == "#":
+        dir = (dir + 1) % 4
+    else:
+        i, j = sig_i, sig_j
+
+
+def encontrar_bucle(oi, oj):
+    if cuadricula[oi][oj] == "#":
+        return False
     
-    lista_ordenada = []
-    while len(lista_ordenada) < len(update):
-        for x in update:
-            if x in lista_ordenada:
-                continue
-            if indeg[x] <= 0:
-                lista_ordenada.append(x)
-                for a, b in r:
-                    if a == x:
-                        indeg[b] -= 1
-    
-    return lista_ordenada
+    cuadricula[oi][oj] = "#"
+    i, j = ii, jj
 
+    dir = 0
+    c = set()
+    while True:
+        if (i, j, dir) in c:
+            cuadricula[oi][oj] = "."
+            return True
+        c.add((i, j, dir))
+
+        sig_i = i + l_direcciones[dir][0]
+        sig_j = j + l_direcciones[dir][1]
+
+        if not (0 <= sig_i < n and 0 <= sig_j < n):
+            cuadricula[oi][oj] = "."
+            return False
+
+        if cuadricula[sig_i][sig_j] == "#":
+            dir = (dir + 1) % 4
+        else:
+            i, j = sig_i, sig_j
 
 total = 0
+for oi, oj in tqdm(c_visitas):
 
-for update in updates:
-    if seguir_reglas(update)[0]:
+    if oi == ii and oj == jj:
         continue
-
-    act_ordenada = ordenar(update)
-    total += act_ordenada[len(act_ordenada) // 2]
+    bucle = encontrar_bucle(oi, oj)
+    total += bucle
 
 print(total)
