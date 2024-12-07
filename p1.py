@@ -1,38 +1,29 @@
+from itertools import product
 
 with open("input.txt") as file:
-    cuadricula = file.read().strip().split("\n")
+    lineas = file.read().strip().split("\n")
 
-n = len(cuadricula)
-m = len(cuadricula[0])
+total = 0
+for i, linea in enumerate(lineas):
+    separacion = linea.split()
+    valor = int(separacion[0][:-1])
+    numeros = list(map(int, separacion[1:]))
 
-pos_inicial_guardia = False
+    def prueba(combinaciones):
+        total = numeros[0]
+        for i in range(1, len(numeros)):
+            if combinaciones[i-1] == "+":
+                total += numeros[i]
+            else:
+                total *= numeros[i]
+        return total
 
-for i in range(n):
-    for j in range(m):
-        if cuadricula[i][j] == "^":
-            pos_inicial_guardia = True
+    long_cadena = len(numeros)-1
+
+    for combinaciones in product("*+", repeat=long_cadena):
+        if prueba(combinaciones) == valor:
+            total += valor
             break
 
-    if pos_inicial_guardia:
-        break
 
-direccion = 0
-l_direcciones = [[-1, 0], [0, 1], [1, 0], [0, -1]]
-
-c_visitas = set()
-
-while True:
-    c_visitas.add((i, j))
-
-    siguiente_i = i + l_direcciones[direccion][0]
-    siguiente_j = j + l_direcciones[direccion][1]
-
-    if not (0 <= siguiente_i < n and 0 <= siguiente_j < n):
-        break
-
-    if cuadricula[siguiente_i][siguiente_j] == "#":
-        direccion = (direccion + 1) % 4
-    else:
-        i, j = siguiente_i, siguiente_j
-
-print(len(c_visitas))
+print(total)
