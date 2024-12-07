@@ -1,33 +1,57 @@
+from collections import defaultdict
 
-#parte 2
+with open("input.txt") as file:
+    c_reglas, updates = file.read().strip().split("\n\n")
+    reglas = []
+    for line in c_reglas.split("\n"):
+        a, b = line.split("|")
+        reglas.append((int(a), int(b)))
+    updates = [list(map(int, line.split(","))) for line in updates.split("\n")]
 
 
-with open("input.txt") as fin:
-    lines = fin.read().strip().split("\n")
+def seguir_reglas(update):
+    dic = {}
+    for i, num in enumerate(update):
+        dic[num] = i
+    
+    for a, b in reglas:
+        if a in dic and b in dic and not dic[a] < dic[b]:
+            return False, 0
+        
+    return True, update[len(update) // 2]
 
-n = len(lines)
-m = len(lines[0])
+def ordenar(update):
+    r = []
+    for a, b in reglas:
+        if not (a in update and b in update):
+            continue
+        r.append((a, b))
 
-dd = []
-for dx in range(-1, 2):
-    for dy in range(-1, 2):
-        if dx != 0 or dy != 0:
-            dd.append((dx, dy))
+    indeg = defaultdict(int)
+    for a, b in r:
+        indeg[b] += 1
+    
+    lista_ordenada = []
+    while len(lista_ordenada) < len(update):
+        for x in update:
+            if x in lista_ordenada:
+                continue
+            if indeg[x] <= 0:
+                lista_ordenada.append(x)
+                for a, b in r:
+                    if a == x:
+                        indeg[b] -= 1
+    
+    return lista_ordenada
 
-def has_xmas(i, j):
-    if not (1 <= i < n - 1 and 1 <= j < m - 1):
-        return False
-    if lines[i][j] != "A":
-        return False
 
-    diag_1 = f"{lines[i-1][j-1]}{lines[i+1][j+1]}"
-    diag_2 = f"{lines[i-1][j+1]}{lines[i+1][j-1]}"
+total = 0
 
-    return diag_1 in ["MS", "SM"] and diag_2 in ["MS", "SM"]
+for update in updates:
+    if seguir_reglas(update)[0]:
+        continue
 
-ans = 0
-for i in range(n):
-    for j in range(m):
-        ans += has_xmas(i, j)
+    act_ordenada = ordenar(update)
+    total += act_ordenada[len(act_ordenada) // 2]
 
-print("parte 2",ans)
+print(total)
