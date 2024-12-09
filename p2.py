@@ -1,35 +1,60 @@
-from itertools import product
+from collections import defaultdict
+from itertools import combinations
 
 with open("input.txt") as file:
-    lineas = file.read().strip().split("\n")
+    cuadricula = file.read().strip().split("\n")
 
-total = 0
+n = len(cuadricula)
 
-for i, linea in enumerate(lineas):
-    separacion = linea.split()
-    valor = int(separacion[0][:-1])
-    numeros = list(map(int, separacion[1:]))
+def en_limite(x, y):
+    return 0 <= x < n and 0 <= y < n
 
-    def prueba(combinaciones):
-        total = numeros[0]
-        for i in range(1, len(numeros)):
-            if combinaciones[i-1] == "+":
-                total += numeros[i]
+def get_antinodos(a, b):
+    ax, ay = a
+    bx, by = b
+    
+    dx, dy = bx - ax, by - ay
 
-            elif combinaciones[i-1] == "|":
-                total = int(f"{total}{numeros[i]}")
-                
-            else:
-                total *= numeros[i]
-
-        return total
-
-    long_cadena = len(numeros)-1
-
-    for combinaciones in product("*+|", repeat=long_cadena):
-        if prueba(combinaciones) == valor:
-            total += valor
+    i = 0
+    while True:
+        if en_limite(ax - dx * i, ay - dy * i):
+            yield (ax - dx * i, ay - dy * i)
+        else:
             break
+        i += 1
+    
+    i = 0
+    while True:
+        if en_limite(bx + dx * i, by + dy * i):
+            yield (bx + dx * i, by + dy * i)
+        else:
+            break
+        i += 1
 
 
-print(total)
+antinodos = set()
+
+ubicaciones = defaultdict(list)
+for i in range(n):
+    for j in range(n):
+        if cuadricula[i][j] != ".":
+            ubicaciones[cuadricula[i][j]].append((i, j))
+
+
+for freq in ubicaciones:
+    ubi = ubicaciones[freq]
+    for a, b in combinations(ubi, r=2):
+        for antinodo in get_antinodos(a, b):
+            antinodos.add(antinodo)
+
+
+for i in range(n):
+    for j in range(n):
+        if (i, j) in antinodos:
+            print("#", end="")
+        else:
+            print(cuadricula[i][j], end="")
+    print()
+
+
+print(len(antinodos))

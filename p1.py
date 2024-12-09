@@ -1,29 +1,44 @@
-from itertools import product
+
+from collections import defaultdict
+from itertools import combinations
 
 with open("input.txt") as file:
-    lineas = file.read().strip().split("\n")
+    cuadricula = file.read().strip().split("\n")
 
-total = 0
-for i, linea in enumerate(lineas):
-    separacion = linea.split()
-    valor = int(separacion[0][:-1])
-    numeros = list(map(int, separacion[1:]))
+print(cuadricula)
 
-    def prueba(combinaciones):
-        total = numeros[0]
-        for i in range(1, len(numeros)):
-            if combinaciones[i-1] == "+":
-                total += numeros[i]
-            else:
-                total *= numeros[i]
-        return total
+n = len(cuadricula)
 
-    long_cadena = len(numeros)-1
+def en_limite(x, y):
+    return 0 <= x < n and 0 <= y < n
 
-    for combinaciones in product("*+", repeat=long_cadena):
-        if prueba(combinaciones) == valor:
-            total += valor
-            break
+def get_antinodos(a, b):
+    ax, ay = a
+    bx, by = b
+    
+    cx, cy = ax - (bx - ax), ay - (by - ay)
+    dx, dy = bx + (bx - ax), by + (by - ay)
+
+    if en_limite(cx, cy):
+        yield (cx, cy)
+    if en_limite(dx, dy):
+        yield (dx, dy)
 
 
-print(total)
+antinodos = set()
+
+ubicaciones = defaultdict(list)
+for i in range(n):
+    for j in range(n):
+        if cuadricula[i][j] != ".":
+            ubicaciones[cuadricula[i][j]].append((i, j))
+
+
+for freq in ubicaciones:
+    locs = ubicaciones[freq]
+    for a, b in combinations(locs, r=2):
+        for antinode in get_antinodos(a, b):
+            antinodos.add(antinode)
+
+
+print(len(antinodos))
